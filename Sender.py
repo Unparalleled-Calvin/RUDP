@@ -11,14 +11,14 @@ import BasicSender
 This is a skeleton sender class. Create a fantastic transport protocol here.
 '''
 class Sender(BasicSender.BasicSender):
-    def __init__(self, dest, port, filename, debug=False, sackMode=False):
+    def __init__(self, dest, port, filename, debug=False, sackMode=False, timeout=0.5):
         super(Sender, self).__init__(dest, port, filename, debug)
         self.sackMode = sackMode
         self.payload = 1024 #正文长度不超过1024
         self.winlen = 5
         self.base = 0 #窗口为[base, base+5)
         self.seqno = 0 #下一个要发的seqno
-        self.timeout = 0.05
+        self.timeout = timeout
         self.packets = [] #存储所有要发的包
     
     #重写send，发送字节类型
@@ -137,13 +137,14 @@ if __name__ == "__main__":
         print("-f FILE | --file=FILE The file to transfer; if empty reads from STDIN")
         print("-p PORT | --port=PORT The destination port, defaults to 33122")
         print("-a ADDRESS | --address ADDRESS The receiver address or hostname, defaults to localhost")
+        print("-t TIMEOUT| --timeout TIMEOUT The maximum time for waitting")
         print("-d | --debug Print debug messages")
         print("-h | --help Print this usage message")
         print("-k | --sack Enable selective acknowledgement mode")
 
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-                               "f:p:a:dk", ["file=", "port=", "address=", "debug=", "sack="])
+                               "f:p:a:t:dk", ["file=", "port=", "address=", "timeout=", "debug=", "sack="])
     except:
         usage()
         exit()
@@ -151,6 +152,7 @@ if __name__ == "__main__":
     port = 33122
     dest = "localhost"
     filename = None
+    timeout = 0.5
     debug = False
     sackMode = False
 
@@ -163,10 +165,12 @@ if __name__ == "__main__":
             dest = a
         elif o in ("-d", "--debug="):
             debug = True
+        elif o in ("-t", "--timeout="):
+            timeout = float(a)
         elif o in ("-k", "--sack="):
             sackMode = True
 
-    s = Sender(dest, port, filename, debug, sackMode)
+    s = Sender(dest, port, filename, debug, sackMode, timeout)
     try:
         s.start()
     except (KeyboardInterrupt, SystemExit):

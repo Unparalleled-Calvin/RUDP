@@ -1,16 +1,17 @@
-运行环境：windows+Python3
+运行环境：Windows+Python3
 实现功能：
 - Go-Back-N
 - 选择重传
 - 丢包、失序、重复，一共六个测试
-- 任意文件传输(base64)
+- 任意类型文件传输(base64)
 
 使用方式：
 ``` sh
-python TestHarness.py -s Sender.py -r Receiver.py 
-# 可用-f指定文件，不指定默认文件为README，例如-f Calvin.jpg
+python TestHarness.py -s Sender.py -r Receiver.py
+# 可用-t指定超时时间，不指定则默认为0.5，例如-t 0.05(建议使用小的timeout以减少测试完成时间)
+# 可用-f指定文件，不指定则默认为README.md，例如-f Calvin.jpg
 ```
-运行截图：![image-20220104161815562](https://s2.loli.net/2022/01/04/M6oKeCQmxaE4OPX.png)
+运行截图：![image-20220104162413163](https://s2.loli.net/2022/01/04/L6ldRUGNXQSfYyC.png)
 
 以下是原README：
 

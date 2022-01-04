@@ -59,10 +59,11 @@ class Forwarder(object):
     """
     The packet forwarder for testing
     """
-    def __init__(self, sender_path, receiver_path, port, debug):
+    def __init__(self, sender_path, receiver_path, port, debug, sender_timeout):
         if not os.path.exists(sender_path):
             raise ValueError("Could not find sender path: %s" % sender_path)
         self.sender_path = sender_path
+        self.sender_timeout = sender_timeout
 
         if not os.path.exists(receiver_path):
             raise ValueError("Could not find receiver path: %s" % receiver_path)
@@ -172,6 +173,7 @@ class Forwarder(object):
 
         senderCmd = ["python", self.sender_path,
                                    "-f", input_file,
+                                   "-t", self.sender_timeout,
                                    "-p", str(self.port)
                                   ]
 
@@ -308,13 +310,14 @@ if __name__ == "__main__":
         print("-p PORT | --port PORT Base port value (default: 33123)")
         print("-s SENDER | --sender SENDER The path to Sender implementation (default: Sender.py)")
         print("-r RECEIVER | --receiver RECEIVER The path to the Receiver implementation (default: Receiver.py)")
+        print("-t TIMEOUT| --timeout TIMEOUT The maximum time for waitting")
         print("-f FILENAME| --file FILE The file needs transmission")
         print("-h | --help Print this usage message")
         print("-d | --debug Enable debug mode")
 
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-                                "p:s:r:f:d", ["port=", "sender=", "receiver=", "filename=", "debug="])
+                                "p:s:r:t:f:d", ["port=", "sender=", "receiver=", "timeout=", "filename=", "debug="])
     except:
         usage()
         exit()
@@ -322,7 +325,8 @@ if __name__ == "__main__":
     port = 33123
     sender = "Sender.py"
     receiver = "Receiver.py"
-    filename = "README"
+    timeout = "0.5"
+    filename = "README.md"
     debug = False
 
     for o,a in opts:
@@ -334,9 +338,11 @@ if __name__ == "__main__":
             receiver = a
         elif o in ("-f", "--file"):
             filename = a
+        elif o in ("-t", "--timeout"):
+            timeout = a
         elif o in ("-d", "--debug"):
             debug = True
 
-    f = Forwarder(sender, receiver, port, debug)
+    f = Forwarder(sender, receiver, port, debug, timeout)
     tests_to_run(f, filename)
     f.execute_tests()
