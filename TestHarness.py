@@ -14,13 +14,15 @@ You'll need to import the tests here and then create an instance of each one
 you want to run. The tests automatically register themselves with the
 forwarder, so they will magically be run.
 """
-def tests_to_run(forwarder):
-    from tests import BasicTest, RandomDropTest, OutOfOrderTest, RepeatedArrivalTest, SackRandomDropTest
-    BasicTest.BasicTest(forwarder, "README")
-    RandomDropTest.RandomDropTest(forwarder, "README")
-    OutOfOrderTest.OutOfOrderTest(forwarder, "README")
-    RepeatedArrivalTest.RepeatedArrivalTest(forwarder, "README")
-    # SackRandomDropTest.SackRandomDropTest(forwarder, "README")
+def tests_to_run(forwarder, filename):
+    from tests import BasicTest, RandomDropTest, OutOfOrderTest, RepeatedArrivalTest, SackRandomDropTest, SackOutOfOrderTest, SackRepeatedArrivalTest
+    BasicTest.BasicTest(forwarder, filename)
+    RandomDropTest.RandomDropTest(forwarder, filename)
+    OutOfOrderTest.OutOfOrderTest(forwarder, filename)
+    RepeatedArrivalTest.RepeatedArrivalTest(forwarder, filename)
+    SackRandomDropTest.SackRandomDropTest(forwarder, filename)
+    SackOutOfOrderTest.SackOutOfOrderTest(forwarder, filename)
+    SackRepeatedArrivalTest.SackRepeatedArrivalTest(forwarder, filename)
 """
 Testing is divided into two pieces: this forwarder and a set of test cases in
 the tests directory.
@@ -117,7 +119,7 @@ class Forwarder(object):
             except (KeyboardInterrupt, SystemExit):
                 exit()
             except Exception as e:
-                print("Test fail")
+                print("Test fail:", e)
             time.sleep(1)
 
     def handle_receive(self, message, address, sackMode = False):
@@ -306,12 +308,13 @@ if __name__ == "__main__":
         print("-p PORT | --port PORT Base port value (default: 33123)")
         print("-s SENDER | --sender SENDER The path to Sender implementation (default: Sender.py)")
         print("-r RECEIVER | --receiver RECEIVER The path to the Receiver implementation (default: Receiver.py)")
+        print("-f FILENAME| --file FILE the file needs transmission")
         print("-h | --help Print this usage message")
         print("-d | --debug Enable debug mode")
 
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-                                "p:s:r:d", ["port=", "sender=", "receiver=", "debug="])
+                                "p:s:r:f:d", ["port=", "sender=", "receiver=", "filename=", "debug="])
     except:
         usage()
         exit()
@@ -319,6 +322,7 @@ if __name__ == "__main__":
     port = 33123
     sender = "Sender.py"
     receiver = "Receiver.py"
+    filename = "README"
     debug = False
 
     for o,a in opts:
@@ -328,9 +332,11 @@ if __name__ == "__main__":
             sender = a
         elif o in ("-r", "--receiver"):
             receiver = a
+        elif o in ("-f", "--file"):
+            filename = a
         elif o in ("-d", "--debug"):
             debug = True
 
     f = Forwarder(sender, receiver, port, debug)
-    tests_to_run(f)
+    tests_to_run(f, filename)
     f.execute_tests()

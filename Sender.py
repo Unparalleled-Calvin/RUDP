@@ -12,15 +12,13 @@ This is a skeleton sender class. Create a fantastic transport protocol here.
 class Sender(BasicSender.BasicSender):
     def __init__(self, dest, port, filename, debug=False, sackMode=False):
         super(Sender, self).__init__(dest, port, filename, debug)
-        if sackMode:
-            raise NotImplementedError #remove this line when you implement SACK
+        self.sackMode = sackMode
         self.payload = 1024 #正文长度不超过1024
         self.winlen = 5
         self.base = 0 #窗口为[base, base+5)
         self.seqno = 0 #下一个要发的seqno
         self.timeout = 0.5 #超时为0.5
-        self.packets = []
-        self.timers = []
+        self.packets = [] #存储所有要发的包
     
     #重写send，发送字节类型
     def send(self, message, address=None):
@@ -56,44 +54,57 @@ class Sender(BasicSender.BasicSender):
             else:
                 packets.append(self.make_packet("end",seqno,fragments[seqno]))
         self.packets = packets
-        self.timers = [0 for i in range(len(packets))]
         self.length = len(packets)
 
     #Main sending loop.
     def start(self):
         self.gen_all_packets() #生成所有要发送的包
         ack = 0
+        acks = [0 for i in range(self.length)]
+        timers = [0 for i in range(self.length)]
         while ack != self.length:
-            while self.seqno < self.base + self.winlen and self.seqno < self.length: #一次性将seqno到窗口末端的包全部发完
-                self.timers[self.seqno] = time.time()
-                self.send(self.packets[self.seqno])
-                if self.debug:
-                    print("Sender.py: send seqno={} timer={}".format(self.seqno, self.timers[self.seqno]))
+            while self.seqno < self.base + self.winlen and self.seqno < self.length: #一次性将seqno到窗口末端的无ack的包全部发完
+                if (self.sackMode and acks[self.seqno] == 0) or not self.sackMode:
+                    timers[self.seqno] = time.time()
+                    self.send(self.packets[self.seqno])
+                    if self.debug:
+                        print("Sender.py: send seqno={} timer={}".format(self.seqno, timers[self.seqno]))
                 self.seqno += 1
             for seqno in range(self.base, self.seqno): #轮询检查超时情况
                 now = time.time()
                 try:
-                    if now - self.timers[seqno] >= self.timeout:
-                        self.handle_timeout(seqno)
-                        break
+                    if (self.sackMode and acks[seqno] == 0) or not self.sackMode: #sackMode下仅对已发送未收到ack的包进行超时检查
+                        if now - timers[seqno] >= self.timeout:
+                            self.handle_timeout(seqno)
+                            break
                 except IndexError:
                     break
-            message = self.receive(self.timeout)
-            if message:
+            message = self.receive(self.timeout) #防止ack丢包
+            if message != None:
                 message = message.decode()
-                msg_type, ack, data, checksum = self.split_packet(message)
+                msg_type, ack_data, data, checksum = self.split_packet(message)
+                if not Checksum.validate_checksum(message):
+                    continue
                 if self.debug:
                     print("Sender.py: received {}|{}|{}|{}".format(msg_type, ack, data[:5], checksum))
-                ack = int(ack)
                 if msg_type == "ack":
-                    if not Checksum.validate_checksum(message):
-                        pass
-                    else: # ack合法
-                        if ack >= self.base: #ack在窗口内
-                            self.handle_new_ack(ack)
-                        else: #ack不在窗口内
-                            self.handle_dup_ack()
-
+                    ack = int(ack_data)
+                elif msg_type == "sack":
+                    ack_data = ack_data.split(";")
+                    ack = int(ack_data[0])
+                    acks[ack-1] = 1
+                    try:
+                        sacks = [int(i) for i in ack_data[1].split(",")]
+                        for sack in sacks:
+                            acks[sack] = 1
+                    except ValueError: #没有sack，int解析""失败
+                        pass 
+                if ack >= self.base: #ack在窗口内
+                    self.handle_new_ack(ack)
+                else: #ack不在窗口内
+                    self.handle_dup_ack()
+                    
+        
     def handle_timeout(self, seqno):
         if self.debug:
             print("seqno={} timeout!".format(seqno))
