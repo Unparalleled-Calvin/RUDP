@@ -2,6 +2,7 @@ import socket
 import getopt
 import sys
 import time
+import base64
 
 import Checksum
 
@@ -43,7 +44,7 @@ class Connection():
 
 
     def record(self,data):
-        self.outfile.write(data.encode())
+        self.outfile.write(base64.decodebytes(data.encode()))
         self.outfile.flush()
 
     def end(self):

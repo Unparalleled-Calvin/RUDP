@@ -2,6 +2,7 @@ import sys
 import getopt
 import math
 import time
+import base64
 
 import Checksum
 import BasicSender
@@ -17,7 +18,7 @@ class Sender(BasicSender.BasicSender):
         self.winlen = 5
         self.base = 0 #窗口为[base, base+5)
         self.seqno = 0 #下一个要发的seqno
-        self.timeout = 0.5 #超时为0.5
+        self.timeout = 0.05
         self.packets = [] #存储所有要发的包
     
     #重写send，发送字节类型
@@ -40,7 +41,7 @@ class Sender(BasicSender.BasicSender):
         file_length = len(file_content)
         self.infile.close()
         fragments = [
-            file_content[i*self.payload:(i+1)*self.payload if (i+1)*self.payload<file_length else file_length]
+            base64.encodebytes(file_content[i*self.payload:(i+1)*self.payload if (i+1)*self.payload<file_length else file_length])
                 for i in range(math.ceil(file_length/self.payload))
         ]
         if len(fragments) == 1:
@@ -113,8 +114,7 @@ class Sender(BasicSender.BasicSender):
     def handle_new_ack(self, ack):
         if self.debug:
             print("Sender.py: received ack={} when base={} ".format(ack, self.base), end="")
-        if ack == self.base + 1:
-            self.base += 1
+        self.base = ack
         if self.debug:
             print("now base={}".format(self.base))
 
@@ -136,7 +136,7 @@ if __name__ == "__main__":
         print("RUDP Sender")
         print("-f FILE | --file=FILE The file to transfer; if empty reads from STDIN")
         print("-p PORT | --port=PORT The destination port, defaults to 33122")
-        print("-a ADDRESS | --address=ADDRESS The receiver address or hostname, defaults to localhost")
+        print("-a ADDRESS | --address ADDRESS The receiver address or hostname, defaults to localhost")
         print("-d | --debug Print debug messages")
         print("-h | --help Print this usage message")
         print("-k | --sack Enable selective acknowledgement mode")

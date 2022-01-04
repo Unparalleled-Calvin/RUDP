@@ -308,7 +308,7 @@ if __name__ == "__main__":
         print("-p PORT | --port PORT Base port value (default: 33123)")
         print("-s SENDER | --sender SENDER The path to Sender implementation (default: Sender.py)")
         print("-r RECEIVER | --receiver RECEIVER The path to the Receiver implementation (default: Receiver.py)")
-        print("-f FILENAME| --file FILE the file needs transmission")
+        print("-f FILENAME| --file FILE The file needs transmission")
         print("-h | --help Print this usage message")
         print("-d | --debug Enable debug mode")
 
