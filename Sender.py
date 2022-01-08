@@ -35,7 +35,7 @@ class Sender(BasicSender.BasicSender):
         # print(packet)
         return packet
     
-    #读入文件内容，构建所有要发送的包存入self.packets，初始化计时器列表
+    #读入文件内容，构建所有要发送的包存入self.packets
     def gen_all_packets(self):
         file_content = self.infile.read()
         file_length = len(file_content)

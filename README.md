@@ -2,7 +2,7 @@
 实现功能：
 - Go-Back-N
 - 选择重传
-- 丢包、失序、重复，一共六个测试
+- 丢包、失序、错误、重复，ack和sack两种模式一共八个测试
 - 任意类型文件传输(base64)
 
 使用方式：
@@ -11,7 +11,7 @@ python TestHarness.py -s Sender.py -r Receiver.py
 # 可用-t指定超时时间，不指定则默认为0.5，例如-t 0.05(建议使用小的timeout以减少测试完成时间)
 # 可用-f指定文件，不指定则默认为README.md，例如-f Calvin.jpg
 ```
-运行截图：![image-20220104162413163](https://s2.loli.net/2022/01/04/L6ldRUGNXQSfYyC.png)
+运行截图：![image-20220108174543271](https://s2.loli.net/2022/01/08/uelHGKqDvQ5X4z1.png)
 
 以下是原README：
 
